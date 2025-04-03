@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flori Fete sau Dorgati</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* Basic reset and retro theme */
+        body {
+            background-color: #000; /* Black background */
+            color: #0ff; /* Cyan text */
+            font-family: 'Press Start 2P', cursive; /* Pixelated font */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align content to the top */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-shadow: 2px 2px #f0f; /* Magenta shadow for text */
+        }
+
+        /* Main game container */
+        #game-container {
+            border: 4px solid #0f0; /* Green border */
+            padding: 20px;
+            background-color: #111; /* Dark gray background */
+            box-shadow: 0 0 15px #0f0; /* Green glow */
+            text-align: center;
+            width: 100%;
+            max-width: 800px; /* Limit maximum width */
+            border-radius: 10px; /* Slightly rounded corners */
+            margin-top: 20px; /* Add some margin at the top */
+        }
+
+        /* Game title */
+        h1 {
+            color: #ff0; /* Yellow title */
+            margin-bottom: 30px;
+            font-size: 1.8em; /* Larger title */
+            text-shadow: 3px 3px #f0f;
+        }
+
+        /* Player sections container */
+        #players-container {
+            display: flex;
+            justify-content: space-around; /* Space out player columns */
+            flex-wrap: wrap; /* Wrap columns on smaller screens */
+            gap: 20px; /* Space between columns */
+            margin-bottom: 30px;
+        }
+
+        /* Individual player column */
+        .player-section {
+            border: 2px dashed #0ff; /* Cyan dashed border */
+            padding: 15px;
+            width: 45%; /* Adjust width for two columns */
+            min-width: 250px; /* Minimum width before wrapping */
+            border-radius: 8px;
+        }
+
+        /* Player name */
+        .player-section h2 {
+            color: #f0f; /* Magenta player name */
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-shadow: 2px 2px #0ff;
+        }
+
+        /* Category title */
+        .category h3 {
+            color: #0f0; /* Green category title */
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        /* Buttons container */
+        .choices button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #333; /* Dark gray button */
+            color: #fff; /* White text */
+            border: 2px solid #fff; /* White border */
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s ease; /* Smooth transition */
+            border-radius: 5px;
+            display: block; /* Make buttons stack vertically */
+            width: 90%; /* Adjust button width */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Button hover effect */
+        .choices button:hover:not(.disabled):not(.selected) { /* Don't apply hover if disabled or selected */
+            background-color: #f0f; /* Magenta background on hover */
+            color: #000; /* Black text on hover */
+            border-color: #f0f;
+            box-shadow: 0 0 10px #f0f; /* Magenta glow */
+        }
+
+        /* Selected button style */
+        .choices button.selected {
+            background-color: #0f0; /* Green background for selected */
+            color: #000; /* Black text for selected */
+            border-color: #0f0;
+            box-shadow: 0 0 10px #0f0; /* Green glow */
+            cursor: default; /* Change cursor for selected */
+        }
+
+        /* Disabled button style (other choice in category) */
+        .choices button.disabled {
+            background-color: #222;
+            color: #555;
+            border-color: #444;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Area for the last choice description */
+        #last-choice-description {
+             margin-top: 20px;
+             padding: 10px;
+             border: 2px dotted #f0f; /* Magenta dotted border */
+             background-color: #202; /* Dark purple background */
+             min-height: 30px;
+             color: #eee; /* Light gray text */
+             font-size: 0.8em; /* Slightly smaller font */
+             text-shadow: 1px 1px #0ff; /* Cyan shadow */
+             border-radius: 5px;
+             line-height: 1.4; /* Improve readability */
+        }
+         #last-choice-description strong {
+             color: #ff0; /* Yellow for the choice name */
+         }
+
+
+        /* Results display area */
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #ff0; /* Yellow border */
+            background-color: #222;
+            min-height: 50px; /* Ensure it has some height */
+            color: #fff; /* White text */
+            font-size: 0.9em;
+            text-shadow: 2px 2px #0ff; /* Cyan shadow */
+            border-radius: 8px;
+        }
+         #results p { /* Add margin to paragraphs inside results */
+             margin: 8px 0;
+         }
+
+         /* Message box for alerts */
+         #message-box {
+            position: fixed;
+            top: 10px; /* Position slightly lower */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ff0; /* Yellow background */
+            color: #000; /* Black text */
+            padding: 10px 20px; /* Adjust padding */
+            border: 3px solid #000;
+            border-radius: 5px;
+            font-size: 0.9em; /* Adjust font size */
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-shadow: none;
+            box-shadow: 5px 5px 0px #f0f; /* Magenta offset shadow */
+         }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            .player-section {
+                width: 90%; /* Stack columns on small screens */
+                margin-bottom: 20px;
+            }
+            #players-container {
+                flex-direction: column;
+                align-items: center;
+            }
+             .choices button {
+                font-size: 0.7em;
+                padding: 8px 10px;
+            }
+             #last-choice-description, #results {
+                 font-size: 0.8em;
+             }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="message-box">Mesaj</div>
+
+    <div id="game-container">
+        <h1>Flori Fete sau Dorgati</h1>
+
+        <div id="players-container">
+            <div class="player-section" id="player-marius">
+                <h2>Marius</h2>
+                <div class="category" data-category="fete">
+                    <h3>Fete</h3>
+                    <div class="choices">
+                        <button data-value="Carmen">Carmen</button>
+                        <button data-value="Fata Salamandra Soparla">Fata Salamandra Soparla</button>
+                    </div>
+                </div>
+                <div class="category" data-category="dorgati">
+                    <h3>Dorgati</h3>
+                    <div class="choices">
+                        <button data-value="Tovarashu">Tovarashu</button>
+                        <button data-value="Fane">Fane</button>
+                    </div>
+                </div>
+                <div class="category" data-category="flori">
+                    <h3>Flori</h3>
+                    <div class="choices">
+                        <button data-value="flori de mucigai">Flori de Mucigai</button>
+                        <button data-value="flori de cires">Flori de Cireș</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-section" id="player-vasile">
+                <h2>Vasile</h2>
+                 <div class="category" data-category="fete">
+                    <h3>Fete</h3>
+                    <div class="choices">
+                        <button data-value="Carmen">Carmen</button>
+                        <button data-value="Fata Salamandra Soparla">Fata Salamandra Soparla</button>
+                    </div>
+                </div>
+                <div class="category" data-category="dorgati">
+                    <h3>Dorgati</h3>
+                    <div class="choices">
+                        <button data-value="Tovarashu">Tovarashu</button>
+                        <button data-value="Fane">Fane</button>
+                    </div>
+                </div>
+                <div class="category" data-category="flori">
+                    <h3>Flori</h3>
+                    <div class="choices">
+                        <button data-value="flori de mucigai">Flori de Mucigai</button>
+                        <button data-value="flori de cires">Flori de Cireș</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="last-choice-description">Apasă un buton pentru a vedea descrierea...</div>
+
+        <div id="results">Așteptând alegerile...</div>
+    </div>
+
+    <script>
+        // --- Sound Effects Setup ---
+        let synth; // Declare synth globally
+
+        // Function to initialize Tone.js context
+        function initAudio() {
+            // Check if Tone.js is available and context is not already started
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                 Tone.start(); // Start audio context on user interaction
+                 console.log("Audio Context Started by initAudio()");
+            }
+             // Initialize synth if not already done
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.Synth({
+                     oscillator: { type: 'square' }, // Retro square wave sound
+                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 }
+                }).toDestination();
+                 console.log("Synth Initialized");
+            }
+        }
+
+
+        // Function to play a simple beep sound
+        function playSound(note = 'C4', duration = '16n') {
+             // Ensure audio context is running before playing sound
+             if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                 console.warn("Audio context not running. Attempting to start...");
+                 initAudio(); // Try to initialize again
+             }
+
+             if (synth && Tone.context.state === 'running') {
+                 try {
+                     synth.triggerAttackRelease(note, duration);
+                 } catch (error) {
+                     console.error("Error playing sound:", error);
+                 }
+             } else {
+                 console.warn("Synth not initialized or audio context suspended. Click needed first or check browser permissions.");
+             }
+         }
+
+        // --- Game Logic ---
+        const players = {
+            marius: { fete: null, dorgati: null, flori: null },
+            vasile: { fete: null, dorgati: null, flori: null }
+        };
+
+        // Funny descriptions for each choice
+        const descriptions = {
+            "Carmen": "O alegere clasică, dar ai grijă la temperament!",
+            "Fata Salamandra Soparla": "Curajos! Sper că ai terariu pregătit.",
+            "Tovarashu": "Sună a planuri cincinale și ședințe lungi.",
+            "Fane": "Un băiat simplu, probabil cu o Dacie veche.",
+            "flori de mucigai": "Estetică... post-apocaliptică? Sau doar ai uitat pâinea pe masă?",
+            "flori de cires": "Poetic! Pregătește-te pentru poze pe Instagram."
+        };
+
+        const resultsDiv = document.getElementById('results');
+        const descriptionDiv = document.getElementById('last-choice-description'); // Get the new description div
+        const playerSections = document.querySelectorAll('.player-section');
+        const messageBox = document.getElementById('message-box');
+
+        // Function to show a message in the top message box
+        function showMessage(text) {
+            messageBox.textContent = text;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        // Add event listeners to all choice buttons
+        playerSections.forEach(section => {
+            const playerName = section.id.split('-')[1]; // 'marius' or 'vasile'
+            const choiceButtons = section.querySelectorAll('.choices button');
+
+            choiceButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Initialize audio on the first click/interaction
+                    initAudio();
+
+                    // Play selection sound
+                    playSound('E4', '16n');
+
+                    const categoryDiv = button.closest('.category');
+                    const category = categoryDiv.dataset.category;
+                    const value = button.dataset.value;
+                    const currentChoice = players[playerName][category];
+
+                    // Prevent re-selecting the same option or clicking disabled buttons
+                    if (button.classList.contains('disabled') || currentChoice === value) {
+                         playSound('C3', '8n'); // Play a duller sound for invalid action
+                         return; // Do nothing if the button is disabled or already selected
+                    }
+
+                    // Store the selection
+                    players[playerName][category] = value;
+
+                    // Update button styles within the category for this player
+                    const categoryButtons = categoryDiv.querySelectorAll('.choices button');
+                    categoryButtons.forEach(btn => {
+                        if (btn === button) {
+                            btn.classList.add('selected');
+                            btn.classList.remove('disabled');
+                        } else {
+                            btn.classList.remove('selected');
+                            btn.classList.add('disabled'); // Visually disable the other option
+                        }
+                    });
+
+                    // --- Display Funny Description ---
+                    const description = descriptions[value] || "O descriere misterioasă..."; // Get description or a default
+                    descriptionDiv.innerHTML = `<strong>${value}:</strong> ${description}`; // Show choice and description
+
+
+                    // Check if all selections are made and update results
+                    updateResults();
+                });
+            });
+        });
+
+        // Function to check if all selections are made and display them
+        function updateResults() {
+            let allSelected = true;
+            let mariusChoices = [];
+            let vasileChoices = [];
+            let mariusCount = 0;
+            let vasileCount = 0;
+
+
+            // Check Marius's selections
+            for (const category in players.marius) {
+                if (players.marius[category] === null) {
+                    allSelected = false;
+                } else {
+                    mariusChoices.push(` ${players.marius[category]}`); // Just the choice for brevity
+                    mariusCount++;
+                }
+            }
+
+            // Check Vasile's selections
+            for (const category in players.vasile) {
+                if (players.vasile[category] === null) {
+                    allSelected = false;
+                } else {
+                    vasileChoices.push(` ${players.vasile[category]}`); // Just the choice for brevity
+                    vasileCount++;
+                }
+            }
+
+            // Display current selections or final message
+            if (allSelected) {
+                resultsDiv.innerHTML = `
+                    <p><strong>Marius a ales:</strong> ${mariusChoices.join('; ')}</p>
+                    <p><strong>Vasile a ales:</strong> ${vasileChoices.join('; ')}</p>
+                    <p style="color: #ff0; margin-top: 15px;">ALEGERI FINALE!</p>
+                `;
+                // Play a confirmation sound
+                playSound('G4', '8n');
+            } else {
+                 // Show partial results while waiting
+                 resultsDiv.innerHTML = `Așteptând alegerile... [Marius: ${mariusCount}/3] [Vasile: ${vasileCount}/3]`;
+            }
+        }
+
+         // Initial message
+         showMessage("Alegeți opțiunile!");
+
+        // Add a listener to the document for the very first user interaction to ensure audio context starts
+        document.body.addEventListener('click', initAudio, { once: true });
+
+
+    </script>
+</body>
+</html>
